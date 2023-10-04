@@ -14,3 +14,12 @@ def getPublicKey(name):
     namePath = name + "_key.pem"
     with open("client/public_"+ namePath,"rb") as f:
         return f.read().decode()
+
+def getSignatureToKey(name):
+    namePath = name + "_key.pem"
+    message = "the user " + name + " .signature check."
+    with open("private_"+ namePath,"rb") as f:
+        privateKey = rsa.PrivateKey.load_pkcs1(f.read())
+    return rsa.sign(message.encode(),privateKey, "SHA-256").hex()
+
+print(getSignatureToKey("Lucas"))
