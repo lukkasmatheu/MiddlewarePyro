@@ -63,7 +63,7 @@ def addProduct():
     price = input("Qual o preço do produto:").strip()
     minimalStorage = input("Qual a quantidade minima do produto:").strip()
     produto = Product(code,name,description,amount,price,minimalStorage)
-    server.create_product(produto,getSignatureToKey(gestor.name))
+    server.create_product(json.dumps(produto.__dict__),getSignatureToKey(gestor.name))
 
 def getProduct():
     code = input("Qual o codigo do produto:").strip()
