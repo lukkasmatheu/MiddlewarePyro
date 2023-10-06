@@ -21,5 +21,3 @@ def getSignatureToKey(name):
     with open("private_"+ namePath,"rb") as f:
         privateKey = rsa.PrivateKey.load_pkcs1(f.read())
     return rsa.sign(message.encode(),privateKey, "SHA-256").hex()
-
-print(getSignatureToKey("Lucas"))

@@ -47,7 +47,7 @@ def printMenu():
     print("\n          MENU         \n")
     print("[1] - Cadastrar Novo produto\n")
     print("[2] - Retirar produto\n")
-    option = input("Digite a ação que deseja realizar").strip()
+    option = input("Digite a ação que deseja realizar\n").strip()
     if option in [1,"1"]:
         addProduct()
     elif option in [2,"2"]:
