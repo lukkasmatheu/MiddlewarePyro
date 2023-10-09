@@ -54,13 +54,13 @@ class Services:
                     for productPath in produtcsPath:
                         product =  Product.from_dict(self.read_file("server/product/" + productPath))
                         if float(product.amount) < float(product.minimalStorage):
-                            notification.append("O Produto " + product.name + " codigo:" + product.code + " esta com estoque minimo. quantidade:" + str(product.amount) + " reabasteça seu estoque.")
-                    
-                    notification.append(self.show_products_without_stock_period(3))
+                            notification.append("A fruta " + product.name + "(Código: " + product.code + ") atingiu o estoque mínimo, com apenas " + str(int(product.amount)) + " unidades restantes. Recomendamos efetuar o reabastecimento do estoque imediatamente")
+                    notification = notification + self.show_products_without_stock_period(3)
                     self.send_client_notification(notification)
             except:
                 time.sleep(1)  
-                
+
+
     def save_file(self,pathName,jsonItem):
         with open(pathName,"w") as f:
                 f.write(jsonItem)
@@ -76,17 +76,19 @@ class Services:
             product =  Product.from_dict(self.read_file("server/product/" + productPath))
             haschange = True
             for changes in product.history:
-                if changes["action"] == "retirada" and datetime.datetime.strptime(changes["date"], '%Y-%m-%d %H:%M:%S.%f') > datetime.now() + timedelta(minutes=-float(period)):
+                isPeriod = (datetime.strptime(changes["date"], '%Y-%m-%d %H:%M:%S.%f') > datetime.now() + timedelta(minutes=-float(period)))
+                if changes["action"] == "retirada" and isPeriod:
                         haschange = False
             if haschange:
-                notification.append("O Produto " + product.name + " codigo:" + product.code + " não esta sendo vendido no periodo. quantidade:" + str(product.amount) + " Altere o preço do produto se necessario.")
+                notification.append("A fruta " + product.name + "(Código: " + product.code + ") não está sendo vendida no momento. A quantidade em estoque atual é de " + str(int(product.amount)) + " .Considere a possibilidade de colocar esta fruta em promoção, se necessário, para estimular as vendas.")
         return notification
-                
+            
 
 @Pyro5.api.expose
 class ServerController(object):
     
     __service = Services()
+
     @Pyro5.api.oneway
     def create_client(this, person):
         global userAcess
@@ -94,15 +96,14 @@ class ServerController(object):
         userAcess= person_data["name"]
         pathName = "server/users/person_"+ userAcess + ".json"
         if not os.path.exists(pathName):
-            print("Realizando cadastro de cliente")
             this.__service.save_file(pathName,person)
         else:
             personDTO = this.__service.load_user(userAcess)
             personDTO.referenceRemote = person_data["referenceRemote"]
             this.__service.save_file(pathName,json.dumps(personDTO.__dict__))
-            print("Cliente ja cadastrado. Realizando login\n")
-        x = threading.Thread(target=this.__service.init_report(), args=(1,))
+        x = threading.Thread(target=this.__service.init_report, args=())
         x.start()
+
     #metodo que realiza o save ou update do produto
     def save_product(this,product): 
         newProduct = Product.from_dict(json.loads(product))
@@ -142,7 +143,7 @@ class ServerController(object):
                     produto.add_data_history({"action":"retirada","reason":"Removendo " + amount + " " + produto.name + " do estoque.", "date": datetime.now()})
                     produto.amount = float(produto.amount) - float(amount)
                     this.__service.save_file(pathName,json.dumps(produto.__dict__,default=str))
-                    return "\nRetirada de " + produto.name + "realizada com sucesso. Estoque atual : " + str(produto.amount) 
+                    return "\nRetirada de " + produto.name + " realizada com sucesso. Estoque atual : " + str(produto.amount) 
                 else:
                     return 'Não foi possivel retirar o produto ' + produto.name + ' . A quantidade que voce busca retirar e maior que o estoque atual.'
 
@@ -155,6 +156,25 @@ class ServerController(object):
         for productPath in produtcsPath:
            product =  Product.from_dict(this.__service.read_file("server/product/" + productPath))
            stock.append({"produto": product.name,"quantidade":product.amount})
+        return stock
+
+    def show_products_without_stock_period(this,period):
+        return this.__service.show_products_without_stock_period(period)
+
+    def show_input_output_stock(this,period):
+        stock = []
+        produtcsPath = os.listdir('server/product/')
+        for productPath in produtcsPath:
+            product =  Product.from_dict(this.__service.read_file("server/product/" + productPath))
+            detail= []
+            for history in product.history:
+                isPeriod = (datetime.strptime(history["date"], '%Y-%m-%d %H:%M:%S.%f') > datetime.now() + timedelta(minutes=-float(period)))
+                if isPeriod:
+                    detail.append("Ação:" + history["action"] + " . Descrição: " + history["reason"] + " . Data: " + history["date"] )
+            if detail:
+                stock.append("Nome do Produto:" + product.name ) 
+                stock = stock +  detail
+                stock.append("\n")
         return stock
 
 
