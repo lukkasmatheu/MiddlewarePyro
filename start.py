@@ -12,6 +12,7 @@ nameserver_process = subprocess.Popen("python3 -m Pyro5.nameserver", shell=True)
 server_process = None
 
 try:
+    time.sleep(2)
     server_process = subprocess.Popen("python3 server/server.py", shell=True)
     print(GREEN + "[Servidor Iniciado Com Sucesso]")
     time.sleep(1)  # Aguarde um momento para que o servidor seja inicializado
