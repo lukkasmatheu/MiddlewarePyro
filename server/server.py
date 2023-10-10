@@ -103,6 +103,7 @@ class ServerController(object):
             this.__service.save_file(pathName,json.dumps(personDTO.__dict__))
         x = threading.Thread(target=this.__service.init_report, args=())
         x.start()
+## Criação e edição de produtos
 
     #metodo que realiza o save ou update do produto
     def save_product(this,product): 
@@ -149,7 +150,9 @@ class ServerController(object):
 
         else:
             return "A assinatura do usuario não é valida para realizar essa ação"
-    
+## ----------
+
+## Relatorios de estoque    
     def show_stock(this):
         stock = []
         produtcsPath = os.listdir('server/product/')
@@ -176,7 +179,7 @@ class ServerController(object):
                 stock = stock +  detail
                 stock.append("\n")
         return stock
-
+## ----------
 
 daemon = Pyro5.server.Daemon()       
 ns = Pyro5.api.locate_ns()             
