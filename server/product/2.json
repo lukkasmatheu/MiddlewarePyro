@@ -1,1 +1,1 @@
-{"code": "2", "name": "Maca", "description": "Maca da terra", "amount": 5.0, "price": "0.35", "minimalStorage": "9", "history": [{"action": "criacao", "reason": "Criando produto na base", "date": "2023-10-09 17:38:58.487224"}, {"action": "retirada", "reason": "Removendo 5 Maca do estoque.", "date": "2023-10-09 18:39:43.390605"}]}
+{"code": "2", "name": "Uva", "description": "Uva verde", "amount": "15", "price": "0.5", "minimalStorage": "10", "history": [{"action": "criacao", "reason": "Adicionando produto no estoque. quantidade:15", "date": "2023-10-11 16:18:45.648701"}]}

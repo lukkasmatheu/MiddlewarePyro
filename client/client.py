@@ -19,10 +19,10 @@ daemon = Pyro5.api.Daemon()
 class Client(object):
     
     def notification(self,notification):
-        print("--Notificação--") 
+        print("\n--Notificação--") 
         for detail in notification:
             print(detail)
-        print("--------")
+        print("--------\n")
 
 def acess_server():
     nameserver = Pyro5.api.locate_ns()
