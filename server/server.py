@@ -40,25 +40,17 @@ class Services:
             return False
 
     def init_report(self):
-        schedule.every(1).minutes.do(self.report_product)
+        schedule.every(1).minutes.do(self.show_products_without_stock_period)
         while True:
             schedule.run_pending()
             time.sleep(1)
 
-    def report_product(self):
-        if os.path.exists("server/product/"):
-            try:
-                produtcsPath = os.listdir('server/product/')
-                notification = []
-                if produtcsPath:
-                    for productPath in produtcsPath:
-                        product =  Product.from_dict(self.read_file("server/product/" + productPath))
-                        if float(product.amount) < float(product.minimalStorage):
-                            notification.append("A fruta " + product.name + "(Código: " + product.code + ") atingiu o estoque mínimo, com apenas " + str(int(product.amount)) + " unidades restantes. Recomendamos efetuar o reabastecimento do estoque imediatamente")
-                    notification = notification + self.show_products_without_stock_period(3)
-                    self.send_client_notification(notification)
-            except:
-                time.sleep(1)  
+    def report_product_minimal_stock(self,produto:Product):
+        notification = []
+        if float(produto.amount) < float(produto.minimalStorage):
+            notification.append("A fruta " + produto.name + "(Código: " + produto.code + ") atingiu o estoque mínimo, com apenas " + str(int(produto.amount)) + " unidades restantes. Recomendamos efetuar o reabastecimento do estoque imediatamente")
+            self.send_client_notification(notification)
+
 
 
     def save_file(self,pathName,jsonItem):
@@ -69,7 +61,7 @@ class Services:
         with open(pathName,"r") as f:
                return json.loads(f.read())
     
-    def show_products_without_stock_period(self,period):
+    def show_products_without_stock_period(self,period=3):
         produtcsPath = os.listdir('server/product/')
         notification = []
         for productPath in produtcsPath:
@@ -110,7 +102,7 @@ class ServerController(object):
         newProduct = Product.from_dict(json.loads(product))
         pathName = "server/product/"+ newProduct.code + ".json"
         if not os.path.exists(pathName):
-            newProduct.add_data_history({"action":"criacao","reason":"Criando produto na base", "date": datetime.now()})
+            newProduct.add_data_history({"action":"criacao","reason":"Adicionando produto no estoque. quantidade:" + newProduct.amount, "date": datetime.now()})
             this.__service.save_file(pathName,json.dumps(newProduct.__dict__, default=str))
             return "produto criado com sucesso"
         else:
@@ -144,6 +136,7 @@ class ServerController(object):
                     produto.add_data_history({"action":"retirada","reason":"Removendo " + amount + " " + produto.name + " do estoque.", "date": datetime.now()})
                     produto.amount = float(produto.amount) - float(amount)
                     this.__service.save_file(pathName,json.dumps(produto.__dict__,default=str))
+                    this.__service.report_product_minimal_stock(produto)
                     return "\nRetirada de " + produto.name + " realizada com sucesso. Estoque atual : " + str(produto.amount) 
                 else:
                     return 'Não foi possivel retirar o produto ' + produto.name + ' . A quantidade que voce busca retirar e maior que o estoque atual.'
